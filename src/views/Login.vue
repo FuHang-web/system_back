@@ -10,7 +10,12 @@
         </el-form-item>
         <el-form-item label="验证码" prop="captcha" class="captcha-box">
           <el-input v-model="form.captcha"> </el-input>
-          <div class="img" ref="captchaImgRef" v-html="captcha" @click="switchCaptcha"></div>
+          <div
+            class="img"
+            ref="captchaImgRef"
+            v-html="captcha"
+            @click="switchCaptcha"
+          ></div>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="onSubmitByLogin">登录</el-button>
@@ -22,12 +27,13 @@
 </template>
 
 <script>
-import { getCaptcha } from "@/api/modules/public";
+import { getCaptcha, checkCaptcha } from "@/api/modules/public";
+import { login } from '@/api/modules/user'
 export default {
   data() {
     return {
       form: {},
-      captcha: ''
+      captcha: "",
     };
   },
   created() {
@@ -35,13 +41,29 @@ export default {
   },
   methods: {
     async getCaptchaData() {
-      const res = await getCaptcha()
-      this.captcha = res
+      const res = await getCaptcha();
+      this.captcha = res;
     },
     async switchCaptcha() {
-      this.getCaptchaData()
+      this.getCaptchaData();
     },
-    onSubmitByLogin() {},
+    async onSubmitByLogin() {
+      console.log(this.form);
+      // 判断验证码是否一致
+      const resCode = await checkCaptcha({
+        captcha: this.form.captcha
+      });
+      if (resCode.code !== 200) {
+        this.getCaptchaData()
+        return this.$message.error(resCode.msg);
+      }
+      const res = await login({
+        username: this.form.username,
+        password: this.form.password,
+        captcha: this.form.captcha
+      })
+      console.log(res);
+    },
   },
 };
 </script>
